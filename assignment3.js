@@ -1,5 +1,6 @@
 import {defs, tiny} from './examples/common.js';
 
+
 const {
     Vector, Vector3, vec, Texture, Shape, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Material, Scene,
 } = tiny;
@@ -28,6 +29,9 @@ export class Assignment3 extends Scene {
 
         this.colors = this.set_colors();
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.trail_material = new Material(new defs.Phong_Shader(), {
+            ambient: 1, diffusivity: 0, specularity: 0, color: color(1, 1, 1, 1)
+        });
     }
 
     set_colors() {
@@ -38,6 +42,25 @@ export class Assignment3 extends Scene {
         }
         return this.colors;
     }
+
+    draw_trails(context, program_state) {
+    
+        for (let i = 0; i < this.bodies.length; i++) {
+            const body = this.bodies[i];
+            const trail_color = this.colors[i];
+            
+            for (let j = 0; j < body.trail.length; j++) {
+                const position = body.trail[j];
+                this.shapes.sphere.draw(
+                    context,
+                    program_state,
+                    Mat4.translation(...position).times(Mat4.scale(0.1, 0.1, 0.1)), // Small spheres for trail
+                    this.trail_material.override({ color: trail_color })
+                );
+            }
+        }
+    }
+    
 
     make_control_panel() {
         this.key_triggered_button("Change Colors", ["c"], this.set_colors)
@@ -141,17 +164,25 @@ export class Assignment3 extends Scene {
                 this.materials.sphere.override({color: this.colors[index]})
             );
         });
+
+        this.draw_trails(context, program_state);
     }
 
     update_positions() {
         const forces = this.calculate_all_forces();
-
+    
         for (let i = 0; i < this.bodies.length; i++) {
             const body = this.bodies[i];
             const acceleration = forces[i].times(1 / body.mass);
             body.velocity = body.velocity.plus(acceleration.times(this.time_step));
+            body.trail.push(body.position.copy()); 
+    
+            const max_trail_length = 1000;
+            if (body.trail.length > max_trail_length) {
+                body.trail.shift();
+            }
         }
-
+    
         for (let body of this.bodies) {
             body.position = body.position.plus(body.velocity.times(this.time_step));
         }
