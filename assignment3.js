@@ -18,6 +18,7 @@ export class Assignment3 extends Scene {
         this.G = 6.67430e-11;
         this.time_step = 0.1;
         this.paused = false;
+        this.trailing = false;
 
         this.shapes = {
             sphere: new defs.Subdivision_Sphere(4),
@@ -43,8 +44,11 @@ export class Assignment3 extends Scene {
         return this.colors;
     }
 
+    toggle_trail_state() {
+        this.trailing = !this.trailing
+    }
+
     draw_trails(context, program_state) {
-    
         for (let i = 0; i < this.bodies.length; i++) {
             const body = this.bodies[i];
             const trail_color = this.colors[i];
@@ -65,6 +69,7 @@ export class Assignment3 extends Scene {
     make_control_panel() {
         this.key_triggered_button("Change Colors", ["c"], this.set_colors)
 
+        this.key_triggered_button("Toggle Trail Display", ["t"], this.toggle_trail_state)
         this.key_triggered_button("Increase Mass of Planet 1", ["m"], () => {
             this.bodies[0].mass *= 1.1;
         });
@@ -113,7 +118,6 @@ export class Assignment3 extends Scene {
         distances.sort((a, b) => a.distance - b.distance);
         const closestPair = distances[0].pair;
         const farthestDistance = distances[2].distance;
-        console.log(farthestDistance);
 
         // Calculate center of mass of the closest pair or all bodies
         let center_of_mass;
@@ -165,7 +169,9 @@ export class Assignment3 extends Scene {
             );
         });
 
-        this.draw_trails(context, program_state);
+        if (this.trailing) {
+            this.draw_trails(context, program_state);
+        }
     }
 
     update_positions() {
