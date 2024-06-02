@@ -23,25 +23,33 @@ export class Assignment3 extends Scene {
         this.shapes = {
             sphere: new defs.Subdivision_Sphere(4),
         };
-        this.materials = {
-            sphere: new Material(new defs.Phong_Shader(),
-                {ambient: 0, diffusivity: 1, specularity: 0.3, color: hex_color("#ffffff")}),
-        }
 
-        this.colors = this.set_colors();
+        this.textures = {
+            p1: new Texture("assets/p1.jpg"),
+            p2: new Texture("assets/p2.jpg"),
+            p3: new Texture("assets/p3.jpg")
+        }
+        //this.materials = {
+          //  sphere: new Material(new defs.Phong_Shader(),
+            //    {ambient: 0, diffusivity: 1, specularity: 0.3, color: hex_color("#ffffff")}),
+        //}
+
+        this.materials = {
+            p1: new Material(new defs.Textured_Phong(), {
+                ambient: 0.5, diffusivity: 0.5, specularity: 0.3, texture: this.textures.p1
+            }),
+            p2: new Material(new defs.Textured_Phong(), {
+                ambient: 0.5, diffusivity: 0.5, specularity: 0.3, texture: this.textures.p2
+            }),
+            p3: new Material(new defs.Textured_Phong(), {
+                ambient: 0.5, diffusivity: 0.5, specularity: 0.3, texture: this.textures.p3
+            })
+        };
+
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         this.trail_material = new Material(new defs.Phong_Shader(), {
             ambient: 1, diffusivity: 0, specularity: 0, color: color(1, 1, 1, 1)
         });
-    }
-
-    set_colors() {
-        this.colors = [];
-        for(let i = 0; i < this.bodies.length; i++) {
-            let currentColor = color(Math.random(), Math.random(), Math.random(), 1.0);
-            this.colors.push(currentColor)
-        }
-        return this.colors;
     }
 
     toggle_trail_state() {
@@ -51,7 +59,7 @@ export class Assignment3 extends Scene {
     draw_trails(context, program_state) {
         for (let i = 0; i < this.bodies.length; i++) {
             const body = this.bodies[i];
-            const trail_color = this.colors[i];
+            const trail_color = color(1,1,1,1);
             
             for (let j = 0; j < body.trail.length; j++) {
                 const position = body.trail[j];
@@ -67,7 +75,6 @@ export class Assignment3 extends Scene {
     
 
     make_control_panel() {
-        this.key_triggered_button("Change Colors", ["c"], this.set_colors)
 
         this.key_triggered_button("Toggle Trail Display", ["t"], this.toggle_trail_state)
         this.key_triggered_button("Increase Mass of Planet 1", ["m"], () => {
@@ -161,11 +168,15 @@ export class Assignment3 extends Scene {
         }
 
         this.bodies.forEach((body, index) => {
+            let planet;
+            if (index == 0) planet = this.materials.p1;
+            else if (index == 1) planet = this.materials.p2;
+            else planet = this.materials.p3
             this.shapes.sphere.draw(
                 context,
                 program_state,
                 Mat4.translation(...body.position).times(Mat4.scale(body.mass / 1e11, body.mass / 1e11, body.mass / 1e11)),
-                this.materials.sphere.override({color: this.colors[index]})
+                planet
             );
         });
 
@@ -216,4 +227,3 @@ export class Assignment3 extends Scene {
         return distance_vector.normalized().times(force_magnitude);
     }
 }
-
