@@ -254,7 +254,7 @@ export class Assignment3 extends Scene {
             this.shapes.sphere.draw(
                 context,
                 program_state,
-                Mat4.translation(...body.position).times(Mat4.scale(body.mass / 1e11, body.mass / 1e11, body.mass / 1e11)),
+                Mat4.translation(...body.position).times(Mat4.scale(1, 1, 1)),
                 planet
             );
         });
