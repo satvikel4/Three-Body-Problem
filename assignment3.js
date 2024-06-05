@@ -44,7 +44,7 @@ export class Assignment3 extends Scene {
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         this.trail_material = new Material(new defs.Phong_Shader(), {
-                ambient: 1, diffusivity: 0, specularity: 0, color: color(0, 0, 1, 1)
+                ambient: 1, diffusivity: 0, specularity: 0, color: color(1, 1, 1, 1)
         });
     }
 
