@@ -17,8 +17,9 @@ export class Assignment3 extends Scene {
 
         this.G = 6.67430e-11;
         this.time_step = 0.1;
-        this.paused = false;
+        this.paused = true;
         this.trailing = false;
+        this.simulation_started = false;
 
         this.shapes = {
             sphere: new defs.Subdivision_Sphere(4),
@@ -72,34 +73,90 @@ export class Assignment3 extends Scene {
 
     make_control_panel() {
 
+        this.key_triggered_button("Start Simulation", ["Enter"], () => {
+            this.simulation_started = true;
+            this.paused = false;
+            this.disable_sliders();
+        });
+        this.new_line();
+        this.new_line();
         this.key_triggered_button("Toggle Trail Display", ["t"], this.toggle_trail_state)
-        this.key_triggered_button("Increase Mass of Planet 1", ["m"], () => {
-            this.bodies[0].mass *= 1.1;
-        });
+        // this.key_triggered_button("Increase Mass of Planet 1", ["m"], () => {
+        //     this.bodies[0].mass *= 1.1;
+        // });
+        //
+        // this.key_triggered_button("Decrease Mass of Planet 1", ["n"], () => {
+        //     this.bodies[0].mass /= 1.1;
+        // });
+        //
+        // this.key_triggered_button("Increase Mass of Planet 2", ["l"], () => {
+        //     this.bodies[1].mass *= 1.1;
+        // });
+        //
+        // this.key_triggered_button("Decrease Mass of Planet 2", ["k"], () => {
+        //     this.bodies[1].mass /= 1.1;
+        // });
+        //
+        // this.key_triggered_button("Increase Mass of Planet 3", ["p"], () => {
+        //     this.bodies[2].mass *= 1.1;
+        // });
+        //
+        // this.key_triggered_button("Decrease Mass of Planet 3", ["o"], () => {
+        //     this.bodies[2].mass /= 1.1;
+        // });
 
-        this.key_triggered_button("Decrease Mass of Planet 1", ["n"], () => {
-            this.bodies[0].mass /= 1.1;
-        });
+        this.new_line();
+        this.new_line();
+        this.control_panel.append("Earth X: ");
+        this.earth_x_slider = this.create_slider(-12, 12, this.bodies[0].position[0], (x) => this.bodies[0].position[0] = x);
+        this.control_panel.append(this.earth_x_slider);
+        this.control_panel.append("Earth Y: ");
+        this.earth_y_slider = this.create_slider(-12, 12, this.bodies[0].position[1], (y) => this.bodies[0].position[1] = y);
+        this.control_panel.append(this.earth_y_slider);
+        this.new_line();
 
-        this.key_triggered_button("Increase Mass of Planet 2", ["l"], () => {
-            this.bodies[1].mass *= 1.1;
-        });
+        this.new_line();
+        this.control_panel.append("Mars X: ");
+        this.mars_x_slider = this.create_slider(-12, 12, this.bodies[1].position[0], (x) => this.bodies[1].position[0] = x);
+        this.control_panel.append(this.mars_x_slider);
+        this.control_panel.append("Mars Y: ");
+        this.mars_y_slider = this.create_slider(-12, 12, this.bodies[1].position[1], (y) => this.bodies[1].position[1] = y);
+        this.control_panel.append(this.mars_y_slider);
+        this.new_line();
 
-        this.key_triggered_button("Decrease Mass of Planet 2", ["k"], () => {
-            this.bodies[1].mass /= 1.1;
-        });
-
-        this.key_triggered_button("Increase Mass of Planet 3", ["p"], () => {
-            this.bodies[2].mass *= 1.1;
-        });
-
-        this.key_triggered_button("Decrease Mass of Planet 3", ["o"], () => {
-            this.bodies[2].mass /= 1.1;
-        });
+        this.new_line();
+        this.control_panel.append("Jupiter X: ");
+        this.jupiter_x_slider = this.create_slider(-12, 12, this.bodies[2].position[0], (x) => this.bodies[2].position[0] = x);
+        this.control_panel.append(this.jupiter_x_slider);
+        this.control_panel.append("Jupiter Y: ");
+        this.jupiter_y_slider = this.create_slider(-12, 12, this.bodies[2].position[1], (y) => this.bodies[2].position[1] = y);
+        this.control_panel.append(this.jupiter_y_slider);
+        this.new_line();
+        this.new_line();
 
         this.key_triggered_button("Pause/Resume Simulation", [" "], () => {
             this.paused = !this.paused;
         });
+    }
+
+    create_slider(min, max, initial, callback) {
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = min;
+        slider.max = max;
+        slider.value = initial;
+        slider.step = 1;
+        slider.oninput = (event) => callback(parseFloat(event.target.value));
+        return slider;
+    }
+
+    disable_sliders() {
+        this.earth_x_slider.disabled = true;
+        this.earth_y_slider.disabled = true;
+        this.mars_x_slider.disabled = true;
+        this.mars_y_slider.disabled = true;
+        this.jupiter_x_slider.disabled = true;
+        this.jupiter_y_slider.disabled = true;
     }
 
     display(context, program_state) {
@@ -151,6 +208,9 @@ export class Assignment3 extends Scene {
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
+
+        console.log(this.bodies[0].position[0]);
+        console.log(this.bodies[1].position[0]);
 
         const light_positions = [
             vec4(this.bodies[0].position[0], this.bodies[0].position[1] + 10, this.bodies[0].position[2], 1),
