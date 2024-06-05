@@ -25,30 +25,26 @@ export class Assignment3 extends Scene {
         };
 
         this.textures = {
-            p1: new Texture("assets/p1.jpg"),
-            p2: new Texture("assets/p2.jpg"),
-            p3: new Texture("assets/p3.jpg")
+            p1: new Texture("assets/earth.png"),
+            p2: new Texture("assets/mars.png"),
+            p3: new Texture("assets/jupiter.png")
         }
-        //this.materials = {
-          //  sphere: new Material(new defs.Phong_Shader(),
-            //    {ambient: 0, diffusivity: 1, specularity: 0.3, color: hex_color("#ffffff")}),
-        //}
 
         this.materials = {
             p1: new Material(new defs.Textured_Phong(), {
-                ambient: 0.5, diffusivity: 0.5, specularity: 0.3, texture: this.textures.p1
+                ambient: 1, diffusivity: 1, specularity: 0.3, texture: this.textures.p1
             }),
             p2: new Material(new defs.Textured_Phong(), {
-                ambient: 0.5, diffusivity: 0.5, specularity: 0.3, texture: this.textures.p2
+                ambient: 1, diffusivity: 1, specularity: 0.3, texture: this.textures.p2
             }),
             p3: new Material(new defs.Textured_Phong(), {
-                ambient: 0.5, diffusivity: 0.5, specularity: 0.3, texture: this.textures.p3
+                ambient: 1, diffusivity: 1, specularity: 0.3, texture: this.textures.p3
             })
         };
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
         this.trail_material = new Material(new defs.Phong_Shader(), {
-            ambient: 1, diffusivity: 0, specularity: 0, color: color(1, 1, 1, 1)
+                ambient: 1, diffusivity: 0, specularity: 0, color: color(0, 0, 1, 1)
         });
     }
 
@@ -59,7 +55,7 @@ export class Assignment3 extends Scene {
     draw_trails(context, program_state) {
         for (let i = 0; i < this.bodies.length; i++) {
             const body = this.bodies[i];
-            const trail_color = color(1,1,1,1);
+            const trail_colors = [ color(0,0.615,0.769,1), color(0.906,0.490,0.067,1), color(0.675,0.506,0.506,1) ];
             
             for (let j = 0; j < body.trail.length; j++) {
                 const position = body.trail[j];
@@ -67,7 +63,7 @@ export class Assignment3 extends Scene {
                     context,
                     program_state,
                     Mat4.translation(...position).times(Mat4.scale(0.1, 0.1, 0.1)), // Small spheres for trail
-                    this.trail_material.override({ color: trail_color })
+                    this.trail_material.override({ color: trail_colors[i] })
                 );
             }
         }
@@ -185,6 +181,18 @@ export class Assignment3 extends Scene {
         }
     }
 
+    // Check if two bodies are colliding using AABB
+    are_bodies_colliding(body1, body2) {
+        const half_size1 = body1.mass / 1e11;
+        const half_size2 = body2.mass / 1e11;
+
+        return (
+            Math.abs(body1.position[0] - body2.position[0]) <= half_size1 + half_size2 &&
+            Math.abs(body1.position[1] - body2.position[1]) <= half_size1 + half_size2 &&
+            Math.abs(body1.position[2] - body2.position[2]) <= half_size1 + half_size2
+        );
+    }
+
     update_positions() {
         const forces = this.calculate_all_forces();
     
@@ -197,6 +205,17 @@ export class Assignment3 extends Scene {
             const max_trail_length = 1000;
             if (body.trail.length > max_trail_length) {
                 body.trail.shift();
+            }
+        }
+
+        // Check for collisions and resolve them
+        for (let i = 0; i < this.bodies.length; i++) {
+            for (let j = i + 1; j < this.bodies.length; j++) {
+                if (this.are_bodies_colliding(this.bodies[i], this.bodies[j])) {
+                    // this.resolve_collision(this.bodies[i], this.bodies[j]);
+                    // this.paused = true;
+                    console.log("intersection");
+                }
             }
         }
     
