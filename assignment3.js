@@ -19,7 +19,6 @@ export class Assignment3 extends Scene {
         this.time_step = 0.1;
         this.paused = true;
         this.trailing = false;
-        this.simulation_started = false;
 
         this.shapes = {
             sphere: new defs.Subdivision_Sphere(4),
@@ -74,7 +73,6 @@ export class Assignment3 extends Scene {
     make_control_panel() {
 
         this.key_triggered_button("Start Simulation", ["Enter"], () => {
-            this.simulation_started = true;
             this.paused = false;
             this.disable_sliders();
         });
@@ -137,6 +135,17 @@ export class Assignment3 extends Scene {
         this.key_triggered_button("Pause/Resume Simulation", [" "], () => {
             this.paused = !this.paused;
         });
+        this.new_line();
+        this.new_line();
+        this.key_triggered_button("Reset Simulation", ["r"], () => {
+            this.paused = true;
+            this.bodies = [
+                { mass: 1e11, position: vec3(-7, 0, 0), velocity: vec3(0, 1, 0), id: "b1", trail: []},
+                { mass: 1e11, position: vec3(7, 0, 0), velocity: vec3(0, -1, 0), id: "b2", trail: []},
+                { mass: 1e11, position: vec3(0, 5, 0), velocity: vec3(1, 0, 0), id: "b3", trail: []}
+            ];
+            this.enable_sliders();
+        });
     }
 
     create_slider(min, max, initial, callback) {
@@ -148,6 +157,15 @@ export class Assignment3 extends Scene {
         slider.step = 1;
         slider.oninput = (event) => callback(parseFloat(event.target.value));
         return slider;
+    }
+
+    enable_sliders() {
+        this.earth_x_slider.disabled = false;
+        this.earth_y_slider.disabled = false;
+        this.mars_x_slider.disabled = false;
+        this.mars_y_slider.disabled = false;
+        this.jupiter_x_slider.disabled = false;
+        this.jupiter_y_slider.disabled = false;
     }
 
     disable_sliders() {
