@@ -18,6 +18,7 @@ export class Assignment3 extends Scene {
         this.G = 6.67430e-11;
         this.time_step = 0.1;
         this.paused = true;
+        this.simulation_started = false;
         this.trailing = false;
 
         this.shapes = {
@@ -73,6 +74,7 @@ export class Assignment3 extends Scene {
     make_control_panel() {
 
         this.key_triggered_button("Start Simulation", ["Enter"], () => {
+            this.simulation_started = true;
             this.paused = false;
             this.disable_sliders();
         });
@@ -133,12 +135,15 @@ export class Assignment3 extends Scene {
         this.new_line();
 
         this.key_triggered_button("Pause/Resume Simulation", [" "], () => {
-            this.paused = !this.paused;
+            if (this.simulation_started) {
+                this.paused = !this.paused;
+            }
         });
         this.new_line();
         this.new_line();
         this.key_triggered_button("Reset Simulation", ["r"], () => {
             this.paused = true;
+            this.simulation_started = false;
             this.bodies = [
                 { mass: 1e11, position: vec3(-7, 0, 0), velocity: vec3(0, 1, 0), id: "b1", trail: []},
                 { mass: 1e11, position: vec3(7, 0, 0), velocity: vec3(0, -1, 0), id: "b2", trail: []},
