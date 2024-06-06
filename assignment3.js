@@ -81,29 +81,6 @@ export class Assignment3 extends Scene {
         this.new_line();
         this.new_line();
         this.key_triggered_button("Toggle Trail Display", ["t"], this.toggle_trail_state)
-        // this.key_triggered_button("Increase Mass of Planet 1", ["m"], () => {
-        //     this.bodies[0].mass *= 1.1;
-        // });
-        //
-        // this.key_triggered_button("Decrease Mass of Planet 1", ["n"], () => {
-        //     this.bodies[0].mass /= 1.1;
-        // });
-        //
-        // this.key_triggered_button("Increase Mass of Planet 2", ["l"], () => {
-        //     this.bodies[1].mass *= 1.1;
-        // });
-        //
-        // this.key_triggered_button("Decrease Mass of Planet 2", ["k"], () => {
-        //     this.bodies[1].mass /= 1.1;
-        // });
-        //
-        // this.key_triggered_button("Increase Mass of Planet 3", ["p"], () => {
-        //     this.bodies[2].mass *= 1.1;
-        // });
-        //
-        // this.key_triggered_button("Decrease Mass of Planet 3", ["o"], () => {
-        //     this.bodies[2].mass /= 1.1;
-        // });
 
         this.new_line();
         this.new_line();
@@ -133,6 +110,25 @@ export class Assignment3 extends Scene {
         this.control_panel.append(this.jupiter_y_slider);
         this.new_line();
         this.new_line();
+
+
+        this.control_panel.append("Earth Mass: ");
+        this.earth_mass_slider = this.create_slider(1e10, 1e12, this.bodies[0].mass, (m) => this.bodies[0].mass = m);
+        this.control_panel.append(this.earth_mass_slider);
+        this.new_line();
+
+        this.control_panel.append("Mars Mass: ");
+        this.mars_mass_slider = this.create_slider(1e10, 1e12, this.bodies[1].mass, (m) => this.bodies[1].mass = m);
+        this.control_panel.append(this.mars_mass_slider);
+        this.new_line();
+
+        this.control_panel.append("Jupiter Mass: ");
+        this.jupiter_mass_slider = this.create_slider(1e10, 1e12, this.bodies[2].mass, (m) => this.bodies[2].mass = m);
+        this.control_panel.append(this.jupiter_mass_slider);
+        this.new_line();
+        this.new_line();
+
+
 
         this.key_triggered_button("Pause/Resume Simulation", [" "], () => {
             if (this.simulation_started) {
