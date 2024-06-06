@@ -1,6 +1,5 @@
 import {defs, tiny} from './examples/common.js';
 
-
 const {
     Vector, Vector3, vec, Texture, Shape, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Material, Scene,
 } = tiny;
@@ -10,16 +9,17 @@ export class Assignment3 extends Scene {
         super();
 
         this.bodies = [
-            { mass: 1e11, position: vec3(-7, 0, 0), velocity: vec3(0, 1, 0), id: "b1", trail: []},
-            { mass: 1e11, position: vec3(7, 0, 0), velocity: vec3(0, -1, 0), id: "b2", trail: []},
-            { mass: 1e11, position: vec3(0, 5, 0), velocity: vec3(1, 0, 0), id: "b3", trail: []}
-        ]
+            { mass: 1e11, position: vec3(-7, 0, 0), velocity: vec3(0, 1, 0), id: "b1", trail: [], colliding: false },
+            { mass: 1e11, position: vec3(7, 0, 0), velocity: vec3(0, -1, 0), id: "b2", trail: [], colliding: false },
+            { mass: 1e11, position: vec3(0, 5, 0), velocity: vec3(1, 0, 0), id: "b3", trail: [], colliding: false }
+        ];
 
         this.G = 6.67430e-11;
         this.time_step = 0.1;
         this.paused = true;
         this.simulation_started = false;
         this.trailing = false;
+        this.ongoing_collisions = new Set(); // New set to track ongoing collisions
 
         this.shapes = {
             sphere: new defs.Subdivision_Sphere(4),
@@ -29,7 +29,7 @@ export class Assignment3 extends Scene {
             p1: new Texture("assets/earth.png"),
             p2: new Texture("assets/mars.png"),
             p3: new Texture("assets/jupiter.png")
-        }
+        };
 
         this.materials = {
             p1: new Material(new defs.Textured_Phong(), {
@@ -50,7 +50,7 @@ export class Assignment3 extends Scene {
     }
 
     toggle_trail_state() {
-        this.trailing = !this.trailing
+        this.trailing = !this.trailing;
     }
 
     draw_trails(context, program_state) {
@@ -69,10 +69,8 @@ export class Assignment3 extends Scene {
             }
         }
     }
-    
 
     make_control_panel() {
-
         this.key_triggered_button("Start Simulation", ["Enter"], () => {
             this.simulation_started = true;
             this.paused = false;
@@ -80,7 +78,7 @@ export class Assignment3 extends Scene {
         });
         this.new_line();
         this.new_line();
-        this.key_triggered_button("Toggle Trail Display", ["t"], this.toggle_trail_state)
+        this.key_triggered_button("Toggle Trail Display", ["t"], this.toggle_trail_state);
 
         this.new_line();
         this.new_line();
@@ -111,7 +109,6 @@ export class Assignment3 extends Scene {
         this.new_line();
         this.new_line();
 
-
         this.control_panel.append("Earth Mass: ");
         this.earth_mass_slider = this.create_slider(1e10, 1e12, this.bodies[0].mass, (m) => this.bodies[0].mass = m);
         this.control_panel.append(this.earth_mass_slider);
@@ -128,8 +125,6 @@ export class Assignment3 extends Scene {
         this.new_line();
         this.new_line();
 
-
-
         this.key_triggered_button("Pause/Resume Simulation", [" "], () => {
             if (this.simulation_started) {
                 this.paused = !this.paused;
@@ -141,10 +136,11 @@ export class Assignment3 extends Scene {
             this.paused = true;
             this.simulation_started = false;
             this.bodies = [
-                { mass: 1e11, position: vec3(-7, 0, 0), velocity: vec3(0, 1, 0), id: "b1", trail: []},
-                { mass: 1e11, position: vec3(7, 0, 0), velocity: vec3(0, -1, 0), id: "b2", trail: []},
-                { mass: 1e11, position: vec3(0, 5, 0), velocity: vec3(1, 0, 0), id: "b3", trail: []}
+                { mass: 1e11, position: vec3(-7, 0, 0), velocity: vec3(0, 1, 0), id: "b1", trail: [], colliding: false },
+                { mass: 1e11, position: vec3(7, 0, 0), velocity: vec3(0, -1, 0), id: "b2", trail: [], colliding: false },
+                { mass: 1e11, position: vec3(0, 5, 0), velocity: vec3(1, 0, 0), id: "b3", trail: [], colliding: false }
             ];
+            this.ongoing_collisions.clear();
             this.enable_sliders();
         });
     }
@@ -189,7 +185,7 @@ export class Assignment3 extends Scene {
         for (let i = 0; i < this.bodies.length; i++) {
             for (let j = i + 1; j < this.bodies.length; j++) {
                 const distance = this.bodies[i].position.minus(this.bodies[j].position).norm();
-                distances.push({distance, pair: [i, j]});
+                distances.push({ distance, pair: [i, j] });
             }
         }
 
@@ -228,9 +224,6 @@ export class Assignment3 extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        console.log(this.bodies[0].position[0]);
-        console.log(this.bodies[1].position[0]);
-
         const light_positions = [
             vec4(this.bodies[0].position[0], this.bodies[0].position[1] + 10, this.bodies[0].position[2], 1),
             vec4(this.bodies[1].position[0], this.bodies[1].position[1] + 10, this.bodies[1].position[2], 1),
@@ -238,7 +231,7 @@ export class Assignment3 extends Scene {
         ];
         program_state.lights = light_positions.map(pos => new Light(pos, color(1, 1, 1, 1), 1000));
 
-        if(!this.paused) {
+        if (!this.paused) {
             this.update_positions();
         }
 
@@ -246,7 +239,7 @@ export class Assignment3 extends Scene {
             let planet;
             if (index == 0) planet = this.materials.p1;
             else if (index == 1) planet = this.materials.p2;
-            else planet = this.materials.p3
+            else planet = this.materials.p3;
             this.shapes.sphere.draw(
                 context,
                 program_state,
@@ -274,13 +267,13 @@ export class Assignment3 extends Scene {
 
     update_positions() {
         const forces = this.calculate_all_forces();
-    
+
         for (let i = 0; i < this.bodies.length; i++) {
             const body = this.bodies[i];
             const acceleration = forces[i].times(1 / body.mass);
             body.velocity = body.velocity.plus(acceleration.times(this.time_step));
-            body.trail.push(body.position.copy()); 
-    
+            body.trail.push(body.position.copy());
+
             const max_trail_length = 1000;
             if (body.trail.length > max_trail_length) {
                 body.trail.shift();
@@ -290,14 +283,25 @@ export class Assignment3 extends Scene {
         // Check for collisions and resolve them
         for (let i = 0; i < this.bodies.length; i++) {
             for (let j = i + 1; j < this.bodies.length; j++) {
+                const pair_key = `${i}-${j}`;
                 if (this.are_bodies_colliding(this.bodies[i], this.bodies[j])) {
-                    // this.resolve_collision(this.bodies[i], this.bodies[j]);
-                    // this.paused = true;
-                    console.log("intersection");
+                    if (!this.ongoing_collisions.has(pair_key)) {
+                        this.bodies[i].colliding = true;
+                        this.bodies[j].colliding = true;
+                        this.paused = true;
+                        this.ongoing_collisions.add(pair_key);
+                        console.log("intersection");
+                    }
+                } else {
+                    if (this.ongoing_collisions.has(pair_key)) {
+                        this.ongoing_collisions.delete(pair_key);
+                        this.bodies[i].colliding = false;
+                        this.bodies[j].colliding = false;
+                    }
                 }
             }
         }
-    
+
         for (let body of this.bodies) {
             body.position = body.position.plus(body.velocity.times(this.time_step));
         }
