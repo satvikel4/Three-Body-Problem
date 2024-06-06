@@ -20,6 +20,7 @@ export class Assignment3 extends Scene {
         this.simulation_started = false;
         this.trailing = false;
         this.ongoing_collisions = new Set(); // New set to track ongoing collisions
+        this.collision_pause = false;
 
         this.shapes = {
             sphere: new defs.Subdivision_Sphere(4),
@@ -53,6 +54,10 @@ export class Assignment3 extends Scene {
         this.trailing = !this.trailing;
     }
 
+    toggle_collision_pause() {
+        this.collision_pause = !this.collision_pause;
+    }
+
     draw_trails(context, program_state) {
         for (let i = 0; i < this.bodies.length; i++) {
             const body = this.bodies[i];
@@ -71,58 +76,113 @@ export class Assignment3 extends Scene {
     }
 
     make_control_panel() {
+        const updateDisplay = () => {
+            this.earth_coordinates_display.textContent = `Earth (X, Y): (${this.bodies[0].position[0]}, ${this.bodies[0].position[1]})`;
+            this.mars_coordinates_display.textContent = `Mars (X, Y): (${this.bodies[1].position[0]}, ${this.bodies[1].position[1]})`;
+            this.jupiter_coordinates_display.textContent = `Jupiter (X, Y): (${this.bodies[2].position[0]}, ${this.bodies[2].position[1]})`;
+            this.earth_mass_display.textContent = `Earth Mass: ${this.bodies[0].mass.toExponential(2)}`;
+            this.mars_mass_display.textContent = `Mars Mass: ${this.bodies[1].mass.toExponential(2)}`;
+            this.jupiter_mass_display.textContent = `Jupiter Mass: ${this.bodies[2].mass.toExponential(2)}`;
+        };
+
         this.key_triggered_button("Start Simulation", ["Enter"], () => {
             this.simulation_started = true;
             this.paused = false;
             this.disable_sliders();
         });
-        this.new_line();
-        this.new_line();
         this.key_triggered_button("Toggle Trail Display", ["t"], this.toggle_trail_state);
+        this.key_triggered_button("Toggle Collision Detection", ["c"], this.toggle_collision_pause);
+        this.new_line();
+        this.new_line();
 
-        this.new_line();
-        this.new_line();
         this.control_panel.append("Earth X: ");
-        this.earth_x_slider = this.create_slider(-12, 12, this.bodies[0].position[0], (x) => this.bodies[0].position[0] = x);
+        this.earth_x_slider = this.create_slider(-12, 12, this.bodies[0].position[0], (x) => {
+            this.bodies[0].position[0] = x;
+            updateDisplay();
+        });
         this.control_panel.append(this.earth_x_slider);
         this.control_panel.append("Earth Y: ");
-        this.earth_y_slider = this.create_slider(-12, 12, this.bodies[0].position[1], (y) => this.bodies[0].position[1] = y);
+        this.earth_y_slider = this.create_slider(-12, 12, this.bodies[0].position[1], (y) => {
+            this.bodies[0].position[1] = y;
+            updateDisplay();
+        });
         this.control_panel.append(this.earth_y_slider);
         this.new_line();
-
+        this.earth_coordinates_display = document.createElement("span");
+        this.earth_coordinates_display.textContent = `Earth (X, Y): (${this.bodies[0].position[0]}, ${this.bodies[0].position[1]})`;
+        this.control_panel.append(this.earth_coordinates_display);
         this.new_line();
+        this.new_line();
+
         this.control_panel.append("Mars X: ");
-        this.mars_x_slider = this.create_slider(-12, 12, this.bodies[1].position[0], (x) => this.bodies[1].position[0] = x);
+        this.mars_x_slider = this.create_slider(-12, 12, this.bodies[1].position[0], (x) => {
+            this.bodies[1].position[0] = x;
+            updateDisplay();
+        });
         this.control_panel.append(this.mars_x_slider);
         this.control_panel.append("Mars Y: ");
-        this.mars_y_slider = this.create_slider(-12, 12, this.bodies[1].position[1], (y) => this.bodies[1].position[1] = y);
+        this.mars_y_slider = this.create_slider(-12, 12, this.bodies[1].position[1], (y) => {
+            this.bodies[1].position[1] = y;
+            updateDisplay();
+        });
         this.control_panel.append(this.mars_y_slider);
         this.new_line();
-
+        this.mars_coordinates_display = document.createElement("span");
+        this.mars_coordinates_display.textContent = `Mars (X, Y): (${this.bodies[1].position[0]}, ${this.bodies[1].position[1]})`;
+        this.control_panel.append(this.mars_coordinates_display);
         this.new_line();
+        this.new_line();
+
         this.control_panel.append("Jupiter X: ");
-        this.jupiter_x_slider = this.create_slider(-12, 12, this.bodies[2].position[0], (x) => this.bodies[2].position[0] = x);
+        this.jupiter_x_slider = this.create_slider(-12, 12, this.bodies[2].position[0], (x) => {
+            this.bodies[2].position[0] = x;
+            updateDisplay();
+        });
         this.control_panel.append(this.jupiter_x_slider);
         this.control_panel.append("Jupiter Y: ");
-        this.jupiter_y_slider = this.create_slider(-12, 12, this.bodies[2].position[1], (y) => this.bodies[2].position[1] = y);
+        this.jupiter_y_slider = this.create_slider(-12, 12, this.bodies[2].position[1], (y) => {
+            this.bodies[2].position[1] = y;
+            updateDisplay();
+        });
         this.control_panel.append(this.jupiter_y_slider);
+        this.new_line();
+        this.jupiter_coordinates_display = document.createElement("span");
+        this.jupiter_coordinates_display.textContent = `Jupiter (X, Y): (${this.bodies[2].position[0]}, ${this.bodies[2].position[1]})`;
+        this.control_panel.append(this.jupiter_coordinates_display);
         this.new_line();
         this.new_line();
 
         this.control_panel.append("Earth Mass: ");
-        this.earth_mass_slider = this.create_slider(1e10, 1e12, this.bodies[0].mass, (m) => this.bodies[0].mass = m);
+        this.earth_mass_slider = this.create_slider(4e10, 4e11, this.bodies[0].mass, (m) => {
+            this.bodies[0].mass = m;
+            updateDisplay();
+        });
         this.control_panel.append(this.earth_mass_slider);
+        this.earth_mass_display = document.createElement("span");
+        this.earth_mass_display.textContent = `Earth Mass: ${this.bodies[0].mass.toExponential(2)}`;
+        this.control_panel.append(this.earth_mass_display);
         this.new_line();
 
         this.control_panel.append("Mars Mass: ");
-        this.mars_mass_slider = this.create_slider(1e10, 1e12, this.bodies[1].mass, (m) => this.bodies[1].mass = m);
+        this.mars_mass_slider = this.create_slider(4e10, 4e11, this.bodies[1].mass, (m) => {
+            this.bodies[1].mass = m;
+            updateDisplay();
+        });
         this.control_panel.append(this.mars_mass_slider);
+        this.mars_mass_display = document.createElement("span");
+        this.mars_mass_display.textContent = `Mars Mass: ${this.bodies[1].mass.toExponential(2)}`;
+        this.control_panel.append(this.mars_mass_display);
         this.new_line();
 
         this.control_panel.append("Jupiter Mass: ");
-        this.jupiter_mass_slider = this.create_slider(1e10, 1e12, this.bodies[2].mass, (m) => this.bodies[2].mass = m);
+        this.jupiter_mass_slider = this.create_slider(4e10, 4e11, this.bodies[2].mass, (m) => {
+            this.bodies[2].mass = m;
+            updateDisplay();
+        });
         this.control_panel.append(this.jupiter_mass_slider);
-        this.new_line();
+        this.jupiter_mass_display = document.createElement("span");
+        this.jupiter_mass_display.textContent = `Jupiter Mass: ${this.bodies[2].mass.toExponential(2)}`;
+        this.control_panel.append(this.jupiter_mass_display);
         this.new_line();
 
         this.key_triggered_button("Pause/Resume Simulation", [" "], () => {
@@ -130,8 +190,6 @@ export class Assignment3 extends Scene {
                 this.paused = !this.paused;
             }
         });
-        this.new_line();
-        this.new_line();
         this.key_triggered_button("Reset Simulation", ["r"], () => {
             this.paused = true;
             this.simulation_started = false;
@@ -163,6 +221,9 @@ export class Assignment3 extends Scene {
         this.mars_y_slider.disabled = false;
         this.jupiter_x_slider.disabled = false;
         this.jupiter_y_slider.disabled = false;
+        this.earth_mass_slider.disabled = false;
+        this.mars_mass_slider.disabled = false;
+        this.jupiter_mass_slider.disabled = false;
     }
 
     disable_sliders() {
@@ -172,6 +233,9 @@ export class Assignment3 extends Scene {
         this.mars_y_slider.disabled = true;
         this.jupiter_x_slider.disabled = true;
         this.jupiter_y_slider.disabled = true;
+        this.earth_mass_slider.disabled = true;
+        this.mars_mass_slider.disabled = true;
+        this.jupiter_mass_slider.disabled = true;
     }
 
     display(context, program_state) {
@@ -243,7 +307,7 @@ export class Assignment3 extends Scene {
             this.shapes.sphere.draw(
                 context,
                 program_state,
-                Mat4.translation(...body.position).times(Mat4.scale(1, 1, 1)),
+                Mat4.translation(...body.position).times(Mat4.scale(body.mass / 1e11, body.mass / 1e11, body.mass / 1e11)),
                 planet
             );
         });
@@ -253,7 +317,6 @@ export class Assignment3 extends Scene {
         }
     }
 
-    // Check if two bodies are colliding using AABB
     are_bodies_colliding(body1, body2) {
         const half_size1 = body1.mass / 1e11;
         const half_size2 = body2.mass / 1e11;
@@ -281,26 +344,29 @@ export class Assignment3 extends Scene {
         }
 
         // Check for collisions and resolve them
-        for (let i = 0; i < this.bodies.length; i++) {
-            for (let j = i + 1; j < this.bodies.length; j++) {
-                const pair_key = `${i}-${j}`;
-                if (this.are_bodies_colliding(this.bodies[i], this.bodies[j])) {
-                    if (!this.ongoing_collisions.has(pair_key)) {
-                        this.bodies[i].colliding = true;
-                        this.bodies[j].colliding = true;
-                        this.paused = true;
-                        this.ongoing_collisions.add(pair_key);
-                        console.log("intersection");
-                    }
-                } else {
-                    if (this.ongoing_collisions.has(pair_key)) {
-                        this.ongoing_collisions.delete(pair_key);
-                        this.bodies[i].colliding = false;
-                        this.bodies[j].colliding = false;
+        if(this.collision_pause) {
+            for (let i = 0; i < this.bodies.length; i++) {
+                for (let j = i + 1; j < this.bodies.length; j++) {
+                    const pair_key = `${i}-${j}`;
+                    if (this.are_bodies_colliding(this.bodies[i], this.bodies[j])) {
+                        if (!this.ongoing_collisions.has(pair_key)) {
+                            this.bodies[i].colliding = true;
+                            this.bodies[j].colliding = true;
+                            this.paused = true;
+                            this.ongoing_collisions.add(pair_key);
+                            console.log("intersection");
+                        }
+                    } else {
+                        if (this.ongoing_collisions.has(pair_key)) {
+                            this.ongoing_collisions.delete(pair_key);
+                            this.bodies[i].colliding = false;
+                            this.bodies[j].colliding = false;
+                        }
                     }
                 }
             }
         }
+
 
         for (let body of this.bodies) {
             body.position = body.position.plus(body.velocity.times(this.time_step));
