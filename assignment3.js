@@ -18,8 +18,8 @@ export class Assignment3 extends Scene {
         this.time_step = 0.1;
         this.paused = true;
         this.simulation_started = false;
-        this.trailing = false;
-        this.ongoing_collisions = new Set(); // New set to track ongoing collisions
+        this.trailing = true;
+        this.ongoing_collisions = new Set();
         this.collision_pause = false;
 
         this.shapes = {
@@ -85,13 +85,38 @@ export class Assignment3 extends Scene {
             this.jupiter_mass_display.textContent = `Jupiter Mass: ${this.bodies[2].mass.toExponential(2)}`;
         };
 
+        const updateCollisionText = () => {
+            if (this.collision_pause) {
+                this.collision_text.textContent = "Collision Detection: ON";
+            } else {
+                this.collision_text.textContent = "Collision Detection: OFF";
+            }
+        };
+
         this.key_triggered_button("Start Simulation", ["Enter"], () => {
-            this.simulation_started = true;
-            this.paused = false;
-            this.disable_sliders();
+            let collision_before_start= false;
+            for (let i = 0; i < this.bodies.length; i++) {
+                for (let j = i + 1; j < this.bodies.length; j++) {
+                    if (this.are_bodies_colliding(this.bodies[i], this.bodies[j])) {
+                        collision_before_start = true;
+                        break;
+                    }
+                }
+            }
+            if (!collision_before_start) {
+                this.simulation_started = true;
+                this.paused = false;
+                this.disable_sliders();
+            }
         });
         this.key_triggered_button("Toggle Trail Display", ["t"], this.toggle_trail_state);
-        this.key_triggered_button("Toggle Collision Detection", ["c"], this.toggle_collision_pause);
+        this.key_triggered_button("Toggle Collision Detection", ["c"], () => {
+            this.toggle_collision_pause();
+            updateCollisionText();
+        });
+        this.collision_text = document.createElement("span");
+        updateCollisionText();
+        this.control_panel.append(this.collision_text);
         this.new_line();
         this.new_line();
 
@@ -153,7 +178,7 @@ export class Assignment3 extends Scene {
         this.new_line();
 
         this.control_panel.append("Earth Mass: ");
-        this.earth_mass_slider = this.create_slider(4e10, 4e11, this.bodies[0].mass, (m) => {
+        this.earth_mass_slider = this.create_slider(6e10, 3e11, this.bodies[0].mass, (m) => {
             this.bodies[0].mass = m;
             updateDisplay();
         });
@@ -164,7 +189,7 @@ export class Assignment3 extends Scene {
         this.new_line();
 
         this.control_panel.append("Mars Mass: ");
-        this.mars_mass_slider = this.create_slider(4e10, 4e11, this.bodies[1].mass, (m) => {
+        this.mars_mass_slider = this.create_slider(6e10, 3e11, this.bodies[1].mass, (m) => {
             this.bodies[1].mass = m;
             updateDisplay();
         });
@@ -175,7 +200,7 @@ export class Assignment3 extends Scene {
         this.new_line();
 
         this.control_panel.append("Jupiter Mass: ");
-        this.jupiter_mass_slider = this.create_slider(4e10, 4e11, this.bodies[2].mass, (m) => {
+        this.jupiter_mass_slider = this.create_slider(6e10, 3e11, this.bodies[2].mass, (m) => {
             this.bodies[2].mass = m;
             updateDisplay();
         });
@@ -193,6 +218,8 @@ export class Assignment3 extends Scene {
         this.key_triggered_button("Reset Simulation", ["r"], () => {
             this.paused = true;
             this.simulation_started = false;
+            this.trailing = true;
+            this.collision_pause = false;
             this.bodies = [
                 { mass: 1e11, position: vec3(-7, 0, 0), velocity: vec3(0, 1, 0), id: "b1", trail: [], colliding: false },
                 { mass: 1e11, position: vec3(7, 0, 0), velocity: vec3(0, -1, 0), id: "b2", trail: [], colliding: false },
@@ -200,6 +227,8 @@ export class Assignment3 extends Scene {
             ];
             this.ongoing_collisions.clear();
             this.enable_sliders();
+            updateDisplay();
+            updateCollisionText();
         });
     }
 
@@ -216,14 +245,23 @@ export class Assignment3 extends Scene {
 
     enable_sliders() {
         this.earth_x_slider.disabled = false;
+        this.earth_x_slider.value = this.bodies[0].position[0];
         this.earth_y_slider.disabled = false;
+        this.earth_y_slider.value = this.bodies[0].position[1];
         this.mars_x_slider.disabled = false;
+        this.mars_x_slider.value = this.bodies[1].position[0];
         this.mars_y_slider.disabled = false;
+        this.mars_y_slider.value = this.bodies[1].position[1];
         this.jupiter_x_slider.disabled = false;
+        this.jupiter_x_slider.value = this.bodies[2].position[0];
         this.jupiter_y_slider.disabled = false;
+        this.jupiter_y_slider.value = this.bodies[2].position[1];
         this.earth_mass_slider.disabled = false;
+        this.earth_mass_slider.value = this.bodies[0].mass;
         this.mars_mass_slider.disabled = false;
+        this.mars_mass_slider.value = this.bodies[1].mass;
         this.jupiter_mass_slider.disabled = false;
+        this.jupiter_mass_slider.value = this.bodies[2].mass;
     }
 
     disable_sliders() {
@@ -244,7 +282,6 @@ export class Assignment3 extends Scene {
             program_state.set_camera(this.initial_camera_location);
         }
 
-        // Calculate distances between bodies
         let distances = [];
         for (let i = 0; i < this.bodies.length; i++) {
             for (let j = i + 1; j < this.bodies.length; j++) {
@@ -253,12 +290,10 @@ export class Assignment3 extends Scene {
             }
         }
 
-        // Find the closest pair of bodies
         distances.sort((a, b) => a.distance - b.distance);
         const closestPair = distances[0].pair;
         const farthestDistance = distances[2].distance;
 
-        // Calculate center of mass of the closest pair or all bodies
         let center_of_mass;
         if (farthestDistance > 80) {
             const body1 = this.bodies[closestPair[0]];
@@ -272,14 +307,12 @@ export class Assignment3 extends Scene {
             center_of_mass = center_of_mass.times(1 / this.bodies.length);
         }
 
-        // Calculate the maximum distance of any body from the center of mass
         let max_distance = 0;
         for (const body of this.bodies) {
             const distance = body.position.minus(center_of_mass).norm();
             max_distance = Math.max(max_distance, distance);
         }
 
-        // Adjust camera position and projection based on the maximum distance
         max_distance = Math.min(50, max_distance * 3);
         const distance_factor = Math.max(max_distance, 5); // Minimum distance for better viewing
         const camera_position = center_of_mass.plus(vec3(0, 10, 20).times(distance_factor / 20));
@@ -343,7 +376,6 @@ export class Assignment3 extends Scene {
             }
         }
 
-        // Check for collisions and resolve them
         if(this.collision_pause) {
             for (let i = 0; i < this.bodies.length; i++) {
                 for (let j = i + 1; j < this.bodies.length; j++) {
@@ -354,7 +386,6 @@ export class Assignment3 extends Scene {
                             this.bodies[j].colliding = true;
                             this.paused = true;
                             this.ongoing_collisions.add(pair_key);
-                            console.log("intersection");
                         }
                     } else {
                         if (this.ongoing_collisions.has(pair_key)) {
@@ -366,7 +397,6 @@ export class Assignment3 extends Scene {
                 }
             }
         }
-
 
         for (let body of this.bodies) {
             body.position = body.position.plus(body.velocity.times(this.time_step));
@@ -384,7 +414,6 @@ export class Assignment3 extends Scene {
                 }
             }
         }
-
         return forces;
     }
 
